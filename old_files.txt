@@ -1,0 +1,7 @@
+C:\Windows\System32\old-displayswitch.exe
+C:\Windows\System32\old-magnify.exe
+C:\Windows\System32\old-narrator.exe
+C:\Windows\System32\old-osk.exe
+C:\Windows\System32\old-sethc.exe
+C:\Windows\System32\old-snippingtool.exe
+C:\Windows\System32\old-utilman.exe
