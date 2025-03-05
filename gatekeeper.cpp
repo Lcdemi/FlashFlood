@@ -4,6 +4,31 @@
 #include <vector>
 #include <string>
 
+#include <iostream>
+
+void gatekeeper_art() {
+    std::cout << std::endl;
+    //prints top half
+    std::cout << "\033[93m GGGG   AAAAA  TTTTT  EEEEE   K   K  EEEEE  EEEEE  PPPPP  EEEEE  RRRR\033[0m" 
+              << "\033[93m         .-\"\"-.  \033[0m" << std::endl;
+    std::cout << "\033[93mG       A   A    T    E       K  K   E      E      P   P  E      R   R\033[0m" 
+              << "\033[93m       / .--. \\  \033[0m" << std::endl;
+    std::cout << "\033[93mG  GG   AAAAA    T    EEEE    KKK    EEEE   EEEE   PPPP   EEEE   RRRR\033[0m" 
+              << "\033[93m       / /    \\ \\ \033[0m" << std::endl;
+    std::cout << "\033[93mG   G   A   A    T    E       K  K   E      E      P      E      R  R\033[0m" 
+              << "\033[93m       | |    | | \033[0m" << std::endl;
+    std::cout << "\033[93m GGGG   A   A    T    EEEEE   K   K  EEEEE  EEEEE  P      EEEEE  R   R\033[0m" 
+              << "\033[93m      | |.-\"\"-.| \033[0m" << std::endl;
+
+    //prints bottom half
+    std::cout << "\033[93m                                                                           ///`.::::.`\\\033[0m" << std::endl;
+    std::cout << "\033[91m======================================================================\033[0m    " << "\033[93m||| ::/  \\:: ;\033[0m" << std::endl;
+    std::cout << "\033[91m======================================================================\033[0m    " << "\033[93m||; ::\\__/:: ;\033[0m" << std::endl;
+    std::cout << "\033[91m======================================================================\033[0m    " << "\033[93m \\\\\\ '::::' / \033[0m" << std::endl;
+    std::cout << "\033[91m======================================================================\033[0m    " << "\033[93m  `=':-..-'`\033[0m" << std::endl;
+    std::cout << std::endl;
+}
+
 void error_handling(int status, const std::string& command) {
     if (status != 0) {
         std::cout << "\033[1;31mError Running Command: \033[0m" << command << std::endl;
@@ -116,6 +141,9 @@ void display_switch() {
 int main(int argc, char *argv[]){
     //clears terminal
     error_handling(system("cls"), "cls");
+
+    //runs gatekeeper art
+    gatekeeper_art();
 
     //grants administrator permissions to all backdoor executables
     std::cout << "Gaining Permissions..." << std::endl;
