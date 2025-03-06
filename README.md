@@ -18,9 +18,8 @@ Gatekeeper is a powerful piece of malware designed for competition use, automati
 Gatekeeper can be executed via the command line with multiple arguments:
 ```cmd
 Gatekeeper.exe sk um ds m
-
+```
 ## Future Plans
-
 - Drop Gatekeeper on a box through my Windows C2 that is currently being developed.
 - Develop Image File Execution Options (IFEO) registry keys that:
   - Delete Sysinternals tools.
