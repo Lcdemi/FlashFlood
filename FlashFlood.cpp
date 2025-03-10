@@ -8,7 +8,7 @@
 #include <iostream>
 #include <string.h>
 
-void gatekeeper_art() {
+void ascii_art() {
     //prints FlashFlood ascii art
     std::cout << "\033[96m   ________ ___       ________  ________  ___  ___  ________ ___       ________  ________  ________\033[0m" << std::endl;
     std::cout << "\033[96m  |\\  _____\\\\  \\     |\\   __  \\|\\   ____\\|\\  \\|\\  \\|\\  _____\\\\  \\     |\\   __  \\|\\   __  \\|\\   ___ \\\033[0m" << std::endl;    
@@ -182,8 +182,8 @@ void startup() {
     //clears terminal
     error_handling(system("cls"), "cls");
 
-    //runs gatekeeper art
-    gatekeeper_art();
+    //runs FlashFlood art
+    ascii_art();
 
     //grants administrator permissions to all backdoor executables
     std::cout << "Gaining Permissions..." << std::endl;
