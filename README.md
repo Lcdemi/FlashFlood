@@ -1,4 +1,4 @@
-# Gatekeeper (Subject to Change)
+# Unlocked (Subject to Change)
 
 ## Overview
 Gatekeeper is a powerful piece of malware designed for competition use, automatically deploying six different system backdoors that can be triggered from the Windows login screen. By running a single command, Red Team operators can establish persistent access unless Blue Team successfully detects and mitigates it.
