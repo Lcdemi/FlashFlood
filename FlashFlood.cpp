@@ -153,8 +153,42 @@ void enableUnbufferedOutput() {
     setvbuf(stderr, nullptr, _IONBF, 0);
 }
 
+void create_backups() {
+    std::vector<std::pair<std::string, std::string>> files = {
+        {"sethc.exe", "Sticky Keys"},
+        {"utilman.exe", "Utility Manager"},
+        {"osk.exe", "On Screen Keyboard"},
+        {"displayswitch.exe", "Display"}
+    };
+
+    std::cout << "Creating Backups..." << std::endl;
+    for (const auto& file_pair : files) {
+        const std::string& filename = file_pair.first;
+        const std::string& desc = file_pair.second;
+        std::string path = "C:\\Windows\\System32\\" + filename;
+        std::string backupPath = "C:\\Windows\\System32\\old-" + filename;
+
+        if (GetFileAttributesA(path.c_str()) == INVALID_FILE_ATTRIBUTES) {
+            std::cout << "\033[1;33m\tSkipped " << desc << " - File not found: " << filename << "\033[0m" << std::endl;
+            continue;
+        }
+
+        if (GetFileAttributesA(backupPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+            std::cout << "\033[1;33m\tBackup already exists: " << filename << "\033[0m" << std::endl;
+            continue;
+        }
+
+        std::string backupCmd = "copy \"" + path + "\" \"" + backupPath + "\" >nul 2>&1";
+        if (system(backupCmd.c_str()) == 0) {
+            std::cout << "\033[1;32m\tBackup created for " << desc << "\033[0m" << std::endl;
+        }
+        else {
+            std::cout << "\033[1;31m\tFailed to backup " << desc << "\033[0m" << std::endl;
+        }
+    }
+}
+
 void cleanup() {
-    // List of backup-original pairs
     std::vector<std::pair<std::string, std::string>> files = {
         {"old-sethc.exe", "sethc.exe"},
         {"old-utilman.exe", "utilman.exe"},
@@ -165,32 +199,22 @@ void cleanup() {
     for (const auto& filePair : files) {
         const std::string& backup = filePair.first;
         const std::string& original = filePair.second;
-
         std::string backupPath = "C:\\Windows\\System32\\" + backup;
         std::string originalPath = "C:\\Windows\\System32\\" + original;
 
-        // Check if backup file exists
-        if (GetFileAttributesA(backupPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
-            std::cout << "\033[1;33m\tBackup file not found: " << backup << "\033[0m" << std::endl;
+        // Skip if the original file doesn't exist (e.g., osk.exe missing)
+        if (GetFileAttributesA(originalPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
             continue;
         }
 
-        // Delete the current file if it exists
-        if (GetFileAttributesA(originalPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
-            std::string delCmd = "del /f \"" + originalPath + "\" >nul 2>&1";
-            if (system(delCmd.c_str())) {
-                std::cout << "\033[1;31m\tFailed to delete: " << original << "\033[0m" << std::endl;
-                continue;
-            }
-        }
+        // Delete current file
+        std::string delCmd = "del /f \"" + originalPath + "\" >nul 2>&1";
+        system(delCmd.c_str());
 
-        // Restore the backup
+        // Restore backup
         std::string moveCmd = "move /y \"" + backupPath + "\" \"" + originalPath + "\" >nul 2>&1";
-        if (system(moveCmd.c_str())) {
-            std::cout << "\033[1;31m\tFailed to restore: " << backup << " to " << original << "\033[0m" << std::endl;
-        }
-        else {
-            std::cout << "\033[1;32m\tSuccessfully restored: " << original << "\033[0m" << std::endl;
+        if (system(moveCmd.c_str()) == 0) {
+            std::cout << "\033[1;32m\tRestored: " << original << "\033[0m" << std::endl;
         }
     }
 }
@@ -351,6 +375,8 @@ int run() {
     enableAnsi();
     enableUnbufferedOutput();
     startup(); // Runs basic startup (clear, ASCII art, admin perms, hotkeys, cleanup)
+
+    create_backups(); // Creates backups FIRST
 
     std::cout << "Terminating Processes..." << std::endl;
     terminateBackdoors();
