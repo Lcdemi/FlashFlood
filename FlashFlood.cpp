@@ -38,7 +38,9 @@ void priv_esc() {
         {"displayswitch.exe", "Display"}
     };
 
-    for (const auto& [filename, desc] : files) {
+    for (const auto& file_pair : files) {
+        const std::string& filename = file_pair.first;
+        const std::string& desc = file_pair.second;
         std::string path = "C:\\Windows\\System32\\" + filename;
 
         // Check if the file exists
@@ -119,7 +121,7 @@ void clear_screen() {
     if (!GetConsoleScreenBufferInfo(hStdOut, &csbi)) return;
 
     DWORD cellCount = csbi.dwSize.X * csbi.dwSize.Y;
-    COORD homeCoords = {0, 0};
+    COORD homeCoords = { 0, 0 };
     DWORD count;
 
     if (!FillConsoleOutputCharacter(hStdOut, ' ', cellCount, homeCoords, &count)) return;
@@ -145,7 +147,7 @@ void enableUnbufferedOutput() {
     // Disable buffering for cout and cerr
     std::cout.setf(std::ios::unitbuf);
     std::cerr.setf(std::ios::unitbuf);
-    
+
     // For C-style stdout/stderr (redundant but thorough)
     setvbuf(stdout, nullptr, _IONBF, 0);
     setvbuf(stderr, nullptr, _IONBF, 0);
@@ -343,7 +345,7 @@ int main() {
 
         if (isProcExpRunning) {
             std::cout << "\033[1;33mProcess Explorer detected. Waiting up to 15 minutes...\033[0m" << std::endl;
-            
+
             bool closedEarly = false;
             for (int i = 0; i < 15; i++) {
                 std::this_thread::sleep_for(std::chrono::minutes(1));
@@ -355,7 +357,8 @@ int main() {
 
             if (!closedEarly) {
                 std::cout << "\033[1;33mContinuing after 15-minute wait.\033[0m" << std::endl;
-            } else {
+            }
+            else {
                 std::cout << "\033[1;32mProcess Explorer closed early. Resuming...\033[0m" << std::endl;
             }
         }
