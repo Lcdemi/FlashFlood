@@ -347,8 +347,8 @@ int main() {
             std::cout << "\033[1;33mProcess Explorer detected. Waiting up to 15 minutes...\033[0m" << std::endl;
 
             bool closedEarly = false;
-            for (int i = 0; i < 15; i++) {
-                std::this_thread::sleep_for(std::chrono::minutes(1));
+            for (int i = 0; i < 3; i++) {
+                std::this_thread::sleep_for(std::chrono::minutes(5));
                 if (findProcess(L"procexp.exe") == 0 && findProcess(L"procexp64.exe") == 0) {
                     closedEarly = true;
                     break;
@@ -364,7 +364,7 @@ int main() {
         }
 
         run();
-        std::cout << "\033[1;33mWaiting 1 Minute to Rerun...\033[0m" << std::endl;
-        std::this_thread::sleep_for(std::chrono::minutes(1));
+        std::cout << "\033[1;33mWaiting 5 Minutes to Rerun...\033[0m" << std::endl;
+        std::this_thread::sleep_for(std::chrono::minutes(5));
     }
 }
