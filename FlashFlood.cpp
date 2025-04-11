@@ -198,8 +198,8 @@ void cleanup() {
 
 void sticky_keys() {
     //makes sure that sticky keys is turned on
-    error_handling(system("reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f >nul 2>&1"),
-        "reg add \"HKEY_CURRENT_USER\\Control Panel\\Accessibility\\StickyKeys\" /v \"Flags\" /t REG_SZ /d \"507\" /f");
+    error_handling(system("reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Accessibility\\Configuration\" /v \"StickyKeys_Flags\" /t REG_SZ /d \"510\" /f >nul 2>&1"),
+        "reg add \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Accessibility\\Configuration\" /v \"StickyKeys_Flags\" /t REG_SZ /d \"510\" /f >nul 2>&1");
 
     //replaces sethc.exe with cmd.exe
     error_handling(system("rename C:\\Windows\\System32\\sethc.exe old-sethc.exe >nul 2>&1"), "rename C:\\Windows\\System32\\sethc.exe old-sethc.exe");
